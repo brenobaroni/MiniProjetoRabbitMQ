@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
+using MiniProjetoRabbitMQ.Configuration;
 using Service.Consumers;
 using Service.Consumers.Options;
 using System;
@@ -28,16 +29,9 @@ namespace MiniProjetoRabbitMQ
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            // Inclui os repositórios específicos 
+            DependencyInjection.AddDependencies(ref services, Configuration);
 
-            services.AddControllers();
-            services.AddSwaggerGen(c =>
-            {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "MiniProjetoRabbitMQ", Version = "v1" });
-            });
-
-            services.AddHostedService<ProcessMessageConsumer>();
-
-            services.Configure<RabbitMqConfiguration>(Configuration.GetSection("RabbitMqConfig"));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

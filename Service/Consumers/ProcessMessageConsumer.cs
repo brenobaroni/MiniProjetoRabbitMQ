@@ -11,6 +11,8 @@ using Service.Consumers.Options;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Data.Models;
+using Microsoft.Extensions.DependencyInjection;
+using Service.Interfaces;
 
 namespace Service.Consumers
 {
@@ -19,10 +21,12 @@ namespace Service.Consumers
         private readonly RabbitMqConfiguration _rabbitMqConfiguration;
         private readonly IConnection _connectionChannel;
         private readonly IModel _channel;
+        private readonly IServiceProvider _serviceProvider;
 
         public ProcessMessageConsumer(IOptions<RabbitMqConfiguration> options, IServiceProvider serviceProvider)
         {
             _rabbitMqConfiguration = options.Value;
+            _serviceProvider = serviceProvider;
             ConnectionFactory connectionFactory = new ConnectionFactory()
             {
                 HostName = _rabbitMqConfiguration.Host
@@ -46,14 +50,26 @@ namespace Service.Consumers
             {
                 var contentArray = eventArgs.Body.ToArray();
                 var contentString = Encoding.UTF8.GetString(contentArray);
-                var message = JsonConvert.DeserializeObject<MessageInputModel>(contentString);
-
+                MessageInputModel? message = JsonConvert.DeserializeObject<MessageInputModel>(contentString);
+                NotifyUser(message);
                 _channel.BasicAck(eventArgs.DeliveryTag, false);
             };
 
             _channel.BasicConsume(_rabbitMqConfiguration.Queue, false, consumer);
 
             return Task.CompletedTask;
+        }
+
+        public void NotifyUser(MessageInputModel? message)
+        {
+            if (message != null)
+            {
+                using (var scope = _serviceProvider.CreateScope())
+                {
+                    var notificationService = scope.ServiceProvider.GetRequiredService<INotificationService>();
+                    notificationService.NotifyUser(message.FromId, message.ToId, message.Content);
+                }
+            }
         }
     }
 }
