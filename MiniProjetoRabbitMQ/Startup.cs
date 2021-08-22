@@ -7,6 +7,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
+using Service.Consumers;
+using Service.Consumers.Options;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -32,6 +34,10 @@ namespace MiniProjetoRabbitMQ
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "MiniProjetoRabbitMQ", Version = "v1" });
             });
+
+            services.AddHostedService<ProcessMessageConsumer>();
+
+            services.Configure<RabbitMqConfiguration>(Configuration.GetSection("RabbitMqConfig"));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
